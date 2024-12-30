@@ -1,34 +1,21 @@
 import os
 import cv2
 import streamlit as st
-from ultralytics import YOLO
-import supervision as sv
+import glob
+from PIL import Image
 
-# Install necessary dependencies for cloud environments (streamlit cloud or otherwise)
-import os
-os.system('pip install opencv-python-headless==4.8.0.74')
-
-# Initialize variables
+# Define the model path
 model_path = 'yolov8sbest.pt'
-cams = 0
 
 # Detect number of cameras
+cams = 0
 for i in range(10):
     cam = cv2.VideoCapture(i, cv2.CAP_DSHOW)
     if cam.isOpened():
-        cams += 1
-        cam.release()
-    else:
-        break
-
-root_dir = os.getcwd()
-cap_dir = f"{root_dir}\\CAPTURES"
-try:
-    os.mkdir(cap_dir)
+@@ -24,19 +28,45 @@
 except:
     pass
 
-# Create directories for each camera
 for i in range(cams):
     try:
         cam_dir = f"{cap_dir}\\CAMERA{i+1}"
@@ -36,47 +23,34 @@ for i in range(cams):
     except:
         pass
 
-# Front-end UI setup
+# Front end
 st.title("Security Surveillance")
 st.sidebar.text(f"Available cameras: {cams}")
 st.sidebar.write("---")
 st.sidebar.info("Click to view camera feeds.")
 
-# Security Logs button to view captured images
-security_logs = st.sidebar.button("Security Logs")
-
-if security_logs:
-    camera_choice = st.sidebar.selectbox("Select Camera", [f"Camera {i+1}" for i in range(cams)])
-    
-    # Set path for camera logs (images)
-    camera_index = int(camera_choice.split()[-1]) - 1
-    camera_dir = f"{cap_dir}\\CAMERA{camera_index}"
-
-    # Display images from the selected camera folder
-    images = []
-    for filename in os.listdir(camera_dir):
-        if filename.endswith(".jpg") or filename.endswith(".png"):  # Filter image files
-            image_path = os.path.join(camera_dir, filename)
-            images.append(image_path)
-
-    if images:
-        cols = st.columns(4)  # Display images in a grid (4 images per row)
-        for i, image_path in enumerate(images):
-            with cols[i % 4]:  # Cycle through columns
-                st.image(image_path, caption=f"Image {i+1}", use_column_width=True)
-    else:
-        st.write("No images found for this camera.")
-
 # Handle page navigation manually
 page = st.sidebar.radio("Select Camera Feed", ["Home"] + [f"Camera Feed {i+1}" for i in range(cams)])
 
-if page == "Home":
-    st.subheader("Welcome to the Security Surveillance App.")
-    st.write("Choose a camera feed to monitor real-time footage.")
-else:
-    camera_id = int(page.split()[-1]) - 1
-    st.subheader(f"Camera {camera_id + 1} Feed")
-    # Handle camera feed display here (similar to your base.py logic)
+@@ -50,24 +80,3 @@
     # For example, use the camera feed capturing logic to show images
     # For simplicity, let's assume you load the camera feed and display images
     st.write(f"Displaying feed from Camera {camera_id + 1}")
+# New Feature: Security Logs
+if st.sidebar.button("Security Logs"):
+    # Let the user select which camera's logs to view
+    camera_choice = st.radio("Select Camera", [f"Camera {i+1}" for i in range(cams)])
+    # Get the folder for the selected camera
+    camera_folder = f"{cap_dir}\\{camera_choice.replace(' ', '')}"
+    # Get all image files in the selected camera's folder
+    image_files = glob.glob(os.path.join(camera_folder, "*.png"))
+    image_files.sort()  # Sort images by filename or timestamp
+    # Show images in a grid format
+    if image_files:
+        cols = st.columns(3)  # Display images in 3 columns (adjust as needed)
+        for i, image_file in enumerate(image_files):
+            img = Image.open(image_file)
+            col = cols[i % 3]
+            col.image(img, use_column_width=True, caption=f"Image {i+1}")
+    else:
+        st.write("No images found in this camera's directory.")
