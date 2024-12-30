@@ -1,5 +1,4 @@
-opencv-python-headless==4.8.0.74
-cv2
+opencv-python
 streamlit
 ultralytics
 supervision
