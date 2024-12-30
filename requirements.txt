@@ -3,4 +3,3 @@ streamlit
 ultralytics
 supervision
 st-pages
-
